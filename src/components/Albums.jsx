@@ -1,18 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useHttp } from '../hooks/http'
+import { useContext, useEffect, useState } from 'react';
 import { client_id, credentials, redirect_uri } from '../static/data'
-import { extractCode } from '../hooks/tools';
+import { useHttp } from '../hooks/http'
+import { useClient } from '../client/Client';
 import { Context } from './context/Context';
-import './style/index.css';
-
 import Album from './Album';
+import './style/index.css';
   
 
 export const Albums = () => {
   
   const { request } = useHttp();
+  const { token } = useContext(Context);
+  const { fetchPlaylists } = useClient();
   const [arePlaylistsFetched, setPlaylistsFetched] = useState(false);
-  const [isTokenFetched, setIsTokenFetched] = useState(false);
+  // const [isTokenFetched, setIsTokenFetched] = useState(false);
 
   const scopes = 'playlist-read-private';
   const url = 'https://accounts.spotify.com/authorize' +
@@ -21,67 +22,15 @@ export const Albums = () => {
   (scopes ? '&scope=' + encodeURIComponent(scopes) : '') +
   '&redirect_uri=' + redirect_uri;
 
-  const [token, setToken] = useState('');
   const [playlists, setPlaylists] = useState([]);
-          
-  const fetchToken = useCallback(async() => {
-    try {                  
-      const fetchedToken = await fetch('https://accounts.spotify.com/api/token', {
-        body: `grant_type=authorization_code&code=${ extractCode(window.location.search) }&redirect_uri=${ redirect_uri }`,
-        headers: {
-          Authorization: `Basic ${credentials}`,
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        method: 'POST'
-      });
-      
-
-      fetchedToken.json()
-        .then(res => {
-          console.log(res)        
-          setToken(res.access_token);
-          setIsTokenFetched(true);        
-        });                      
-    }
-    catch (e) {
-      console.log(e)
-    }
-  }, []);
-
-
-  const fetchPlaylists = useCallback(async() => {
-    try {
-      console.log('token: ', token)
-      const fetchedPlaylists = await fetch('https://api.spotify.com/v1/me/playlists', {                                
-          headers: {
-            Authorization: `Bearer ${token}`,                    
-          }
-      });
-
-      fetchedPlaylists.json()
-        .then(res => {                    
-          setPlaylists(res.items);
-          setPlaylistsFetched(true);
-        });         
-    }
-    catch(e) {
-      console.log(e)
-    }
-  }, [token]);
   
-  useEffect( () => {
-    if (!isTokenFetched){
-      fetchToken();   
-      console.log('fetching token...')   
-    }
-  }, [isTokenFetched]);
-  
-  useEffect( () => {
-    if (isTokenFetched && token && !arePlaylistsFetched){      
-      fetchPlaylists();      
+  useEffect( () => {   
+    console.log(token)  
+    if (token && !arePlaylistsFetched){      
       console.log('fetching playlists...')   
+      fetchPlaylists();      
     }
-  }, [isTokenFetched, arePlaylistsFetched]);
+  }, [token, arePlaylistsFetched]);
 
   useEffect( () => {
     console.log('playlists', playlists);
@@ -91,7 +40,6 @@ export const Albums = () => {
   
 
   return (
-    <Context.Provider value={ { token } }>
       <div className='page_container'>
         <a href={url}>GO FOR IT GURL!!</a>
         <div className='albums_container'>
@@ -108,7 +56,6 @@ export const Albums = () => {
         }
         </div>
       </div>
-    </Context.Provider>
   );
 }
 
