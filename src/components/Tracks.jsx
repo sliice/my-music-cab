@@ -1,11 +1,11 @@
 import { useState, useCallback, useEffect, useContext } from 'react';
 import { extractTracks } from '../hooks/tools';
-import { Context } from './context/Context';
+import { AuthContext } from './context/AuthContext';
 import './style/index.css';
 
 export const Tracks = props => {
 
-    const { token } = useContext(Context);
+    const { token } = useContext(AuthContext);
     const [tracks, setTracks] = useState([]);
     const [areTracksFetched, setTracksFetched] = useState(false);
 
@@ -24,7 +24,6 @@ export const Tracks = props => {
         //         setTracks(extractTracks(res.items));
         //         setTracksFetched(true);
         //     });    
-        console.log("token is", token)     
         }
         catch(e) {
           console.log(e)

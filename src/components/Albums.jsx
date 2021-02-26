@@ -2,18 +2,25 @@ import { useContext, useEffect, useState } from 'react';
 import { client_id, credentials, redirect_uri } from '../static/data'
 import { useHttp } from '../hooks/http'
 import { useClient } from '../client/Client';
-import { Context } from './context/Context';
+import { AuthContext } from './context/AuthContext';
 import Album from './Album';
 import './style/index.css';
   
 
 export const Albums = () => {
   
-  const { request } = useHttp();
-  const { token } = useContext(Context);
+  // const { request } = useHttp();
+  const { token } = useContext(AuthContext);
   const { fetchPlaylists } = useClient();
   const [arePlaylistsFetched, setPlaylistsFetched] = useState(false);
-  // const [isTokenFetched, setIsTokenFetched] = useState(false);
+  const { fetchToken } = useClient();
+
+  // authorization
+  useEffect( () => {
+    if (!token){
+      fetchToken();      
+    }
+  }, [token]);
 
   const scopes = 'playlist-read-private';
   const url = 'https://accounts.spotify.com/authorize' +
@@ -23,12 +30,14 @@ export const Albums = () => {
   '&redirect_uri=' + redirect_uri;
 
   const [playlists, setPlaylists] = useState([]);
-  
+
   useEffect( () => {   
-    console.log(token)  
-    if (token && !arePlaylistsFetched){      
-      console.log('fetching playlists...')   
-      fetchPlaylists();      
+    if (token && !arePlaylistsFetched){  
+      fetchPlaylists();
+      // setPlaylists(fetchPlaylists());
+      // console.log(fetchPlaylists())
+      // fetchPlaylists().then((res) => console.log(res))
+      // setPlaylistsFetched(true);  
     }
   }, [token, arePlaylistsFetched]);
 
@@ -41,7 +50,7 @@ export const Albums = () => {
 
   return (
       <div className='page_container'>
-        <a href={url}>GO FOR IT GURL!!</a>
+        <a href={url} id='login_btn'>GO FOR IT GURL!!</a>
         <div className='albums_container'>
         {
           playlists.map((playlist, i) => {
